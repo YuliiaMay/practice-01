@@ -1,33 +1,49 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { nanoid } from 'nanoid';
 import { Grid, GridItem, SearchForm, EditForm, Text, Todo } from 'components';
 
-export class Todos extends Component {
-  state = {
-    todos: [],
-  };
+const localTodos = 'todos';
 
-  componentDidUpdate() {
-    console.log(this.state.todos);
-  }
+export default function Todos() {
+  const [todos, setTodos] = useState(
+    () => JSON.parse(localStorage.getItem(localTodos)) ?? []
+  );
 
-  onSubmit = text => {
-    this.addTodo(text);
-  };
+  useEffect(() => {
+    localStorage.setItem(localTodos, JSON.stringify(todos));
+  }, [todos]);
 
-  addTodo = text => {
+  const addTodo = text => {
     const todo = {
       text,
       id: nanoid(),
     };
-    this.setState(prevState => ({ todos: [...prevState.todos, todo] }));
+    setTodos(prevTodos => [...prevTodos, todo]);
   };
 
-  render() {
-    return (
-      <>
-        <SearchForm onSubmit={this.onSubmit} />
-      </>
-    );
-  }
+  const delTodo = id => {
+    const updatedTodos = todos.filter(item => item.id !== id);
+    setTodos(updatedTodos);
+  };
+
+  return (
+    <>
+      <SearchForm onSubmit={addTodo} />
+      <Grid>
+        {todos.map((todo, index) => {
+          const { text, id } = todo;
+          return (
+            <GridItem key={id}>
+              <Todo
+                id={id}
+                text={text}
+                counter={index + 1}
+                onRemove={delTodo}
+              />
+            </GridItem>
+          );
+        })}
+      </Grid>
+    </>
+  );
 }
